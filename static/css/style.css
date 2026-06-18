@@ -791,3 +791,169 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================
+   Light Theme Override Configurations
+   ========================================== */
+[data-theme="light"] {
+  --bg-app: #f1f5f9;
+  --bg-panel: rgba(255, 255, 255, 0.85);
+  --bg-card: rgba(255, 255, 255, 0.6);
+  --bg-card-hover: rgba(255, 255, 255, 0.9);
+  --border-color: rgba(15, 23, 42, 0.08);
+  --border-color-hover: rgba(15, 23, 42, 0.15);
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  --card-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.05);
+}
+
+/* Specific Light Theme Elements Adjustment */
+[data-theme="light"] .brand-text h1 {
+  background: linear-gradient(to right, #0f172a, #334155, var(--text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .tweeter-drawer {
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid var(--accent-blue);
+  box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] #tweetComposerArea {
+  background: rgba(255, 255, 255, 0.8);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+[data-theme="light"] #tweetComposerArea:focus {
+  border-color: var(--accent-blue);
+}
+
+[data-theme="light"] .selected-preview-item {
+  background: rgba(15, 23, 42, 0.02);
+  border-color: rgba(15, 23, 42, 0.05);
+}
+
+[data-theme="light"] .btn-twitter-lg {
+  background: #000000;
+  color: #ffffff;
+}
+
+[data-theme="light"] .btn-twitter-lg:hover {
+  background: #1e293b;
+}
+
+[data-theme="light"] .btn-twitter-sm:hover {
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
+}
+
+[data-theme="light"] .card-body code {
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+}
+
+/* ==========================================
+   Theme Switcher Toggle Widget Styles
+   ========================================== */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  padding: 0.45rem 0.85rem;
+  border-radius: 99px;
+  backdrop-filter: var(--glass-blur);
+  transition: all 0.3s ease;
+}
+
+[data-theme="light"] .theme-switch-wrapper {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.theme-switch {
+  display: inline-block;
+  height: 20px;
+  position: relative;
+  width: 38px;
+}
+
+.theme-switch input {
+  display: none;
+}
+
+.slider {
+  background-color: rgba(255, 255, 255, 0.15);
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="light"] .slider {
+  background-color: rgba(15, 23, 42, 0.15);
+}
+
+.slider::before {
+  background-color: #ffffff;
+  bottom: 3px;
+  content: "";
+  height: 14px;
+  left: 3px;
+  position: absolute;
+  transition: .4s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 14px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+}
+
+[data-theme="light"] .slider::before {
+  background-color: #0f172a;
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round::before {
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--accent-cyan);
+}
+
+[data-theme="light"] input:checked + .slider {
+  background-color: var(--accent-blue);
+}
+
+input:checked + .slider::before {
+  transform: translateX(18px);
+}
+
+.sun-icon, .moon-icon {
+  font-size: 0.85rem;
+  transition: color 0.3s ease;
+}
+
+.sun-icon {
+  color: var(--text-muted);
+}
+[data-theme="light"] .sun-icon {
+  color: #f59e0b; /* Bright amber sun */
+}
+
+.moon-icon {
+  color: #c084fc; /* Pale purple moon */
+}
+[data-theme="light"] .moon-icon {
+  color: var(--text-muted);
+}

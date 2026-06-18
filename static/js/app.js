@@ -18,6 +18,7 @@ const refreshIcon = document.getElementById('refreshIcon');
 const retryBtn = document.getElementById('retryBtn');
 const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 const exportCsvBtn = document.getElementById('exportCsvBtn');
+const themeCheckbox = document.getElementById('themeCheckbox');
 
 // Drawer Elements
 const tweeterDrawer = document.getElementById('tweeterDrawer');
@@ -31,6 +32,7 @@ const tweetWarning = document.getElementById('tweetWarning');
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   fetchReleases();
   setupEventListeners();
 });
@@ -96,6 +98,13 @@ function setupEventListeners() {
     const text = tweetComposerArea.value;
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(tweetUrl, '_blank');
+  });
+
+  // Theme Toggle
+  themeCheckbox.addEventListener('change', (e) => {
+    const theme = e.target.checked ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
   });
 }
 
@@ -381,4 +390,14 @@ function exportToCSV() {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+// Initialize light/dark theme preference from localStorage
+function initTheme() {
+  const currentTheme = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  
+  if (currentTheme === 'light') {
+    themeCheckbox.checked = true;
+  }
 }
