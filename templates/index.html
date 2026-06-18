@@ -29,6 +29,7 @@
       </div>
       
       <div class="header-actions">
+        <span id="syncStatus" class="sync-status-text" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500; margin-right: 0.5rem; display: none;"></span>
         <div class="theme-switch-wrapper" title="Toggle light/dark theme">
           <i class="fa-regular fa-sun sun-icon"></i>
           <label class="theme-switch" for="themeCheckbox">
@@ -70,6 +71,9 @@
           <button class="filter-btn" data-type="Fixed">Fixes</button>
           <button class="filter-btn" data-type="General">Other</button>
         </div>
+        <button id="selectAllBtn" class="filter-btn" style="margin-left: auto; display: flex; align-items: center; gap: 0.4rem; border-color: rgba(0, 240, 255, 0.2); color: var(--text-secondary);" title="Select all visible updates">
+          <i class="fa-solid fa-list-check"></i> <span>Select All</span>
+        </button>
       </div>
     </section>
 
@@ -130,8 +134,11 @@
             </div>
           </div>
           <div class="tweet-composer-preview">
-            <div class="composer-header">
-              <i class="fa-regular fa-comment-dots"></i> Preview Shared Tweet
+            <div class="composer-header" style="display: flex; align-items: center; width: 100%;">
+              <span><i class="fa-regular fa-comment-dots"></i> Preview Shared Tweet</span>
+              <button id="autoFitBtn" class="btn-auto-fit" title="Trim text to fit under 280 characters" style="margin-left: auto; background: none; border: none; color: var(--accent-cyan); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem; font-weight: 700; text-transform: uppercase;">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Fit
+              </button>
             </div>
             <textarea id="tweetComposerArea" readonly></textarea>
             <div class="char-counter">
@@ -147,6 +154,8 @@
   <footer>
     <p>&copy; 2026 BigQuery Release Explorer &bull; Powered by Google Cloud Feeds</p>
   </footer>
+
+  <div id="toastContainer" class="toast-container"></div>
 
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>

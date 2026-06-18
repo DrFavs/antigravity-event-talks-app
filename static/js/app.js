@@ -19,6 +19,10 @@ const retryBtn = document.getElementById('retryBtn');
 const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 const exportCsvBtn = document.getElementById('exportCsvBtn');
 const themeCheckbox = document.getElementById('themeCheckbox');
+const syncStatus = document.getElementById('syncStatus');
+const selectAllBtn = document.getElementById('selectAllBtn');
+const autoFitBtn = document.getElementById('autoFitBtn');
+const toastContainer = document.getElementById('toastContainer');
 
 // Drawer Elements
 const tweeterDrawer = document.getElementById('tweeterDrawer');
@@ -106,6 +110,39 @@ function setupEventListeners() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   });
+
+  // Select/Deselect All Visible Toggle
+  selectAllBtn.addEventListener('click', () => {
+    const visible = getFilteredReleases();
+    if (visible.length === 0) return;
+    
+    // Check if all visible items are already selected
+    const allSelected = visible.every(item => selectedItems.has(item.id));
+    
+    visible.forEach(item => {
+      if (allSelected) {
+        selectedItems.delete(item.id);
+      } else {
+        selectedItems.add(item.id);
+      }
+    });
+    
+    // Update grid checkboxes
+    document.querySelectorAll('.card-checkbox').forEach(cb => {
+      const id = cb.dataset.id;
+      const visibleItem = visible.find(item => item.id === id);
+      if (visibleItem) {
+        cb.checked = !allSelected;
+      }
+    });
+    
+    updateDrawer();
+    updateSelectAllButtonText();
+    showToast(allSelected ? "Cleared selection!" : `Selected all ${visible.length} visible updates!`);
+  });
+
+  // Auto-fit Aggregated Tweet text
+  autoFitBtn.addEventListener('click', autoFitTweet);
 }
 
 // Fetch data from Flask API
@@ -125,6 +162,18 @@ async function fetchReleases(force = false) {
       selectedItems.clear();
       updateDrawer();
       renderFilteredReleases();
+      
+      // Update Sync Status timestamp
+      if (data.cached_at) {
+        const dateObj = new Date(data.cached_at * 1000);
+        const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        syncStatus.textContent = `Last sync: ${timeStr}`;
+        syncStatus.style.display = 'inline-block';
+      }
+      
+      if (force) {
+        showToast("Feed successfully updated from Google Cloud!");
+      }
     } else {
       showState('error', data.message || 'Unable to parse release notes.');
     }
@@ -189,6 +238,16 @@ function renderFilteredReleases() {
     card.dataset.id = item.id;
     
     const isChecked = selectedItems.has(item.id) ? 'checked' : '';
+    const isLong = item.clean_desc.length > 250;
+    
+    const bodyHtml = isLong ? 
+      `<div class="card-body-wrapper collapsed">
+         <div class="card-body">${item.html}</div>
+       </div>
+       <button class="btn-read-more" onclick="toggleReadMore(event, this)" title="Expand/Collapse description">
+         Show More <i class="fa-solid fa-chevron-down"></i>
+       </button>` :
+      `<div class="card-body">${item.html}</div>`;
     
     card.innerHTML = `
       <div>
@@ -196,9 +255,7 @@ function renderFilteredReleases() {
           <span class="badge ${badgeClass}">${item.type}</span>
           <span class="card-date">${item.date}</span>
         </div>
-        <div class="card-body">
-          ${item.html}
-        </div>
+        ${bodyHtml}
       </div>
       <div class="card-footer">
         <a href="${item.link}" target="_blank" class="btn-icon-link" title="Read on Google Cloud documentation">
@@ -219,6 +276,17 @@ function renderFilteredReleases() {
       </div>
     `;
     
+    // Attach card-wide select target click event listener
+    card.addEventListener('click', (e) => {
+      // Ignore click on interactive buttons/inputs
+      if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.card-checkbox') || e.target.closest('.badge')) {
+        return;
+      }
+      const cb = card.querySelector('.card-checkbox');
+      cb.checked = !cb.checked;
+      toggleItemSelection(item.id, cb.checked);
+    });
+    
     // Attach listener for the checkbox
     const checkbox = card.querySelector('.card-checkbox');
     checkbox.addEventListener('change', (e) => {
@@ -227,6 +295,8 @@ function renderFilteredReleases() {
     
     cardsGrid.appendChild(card);
   });
+
+  updateSelectAllButtonText();
 }
 
 // Handle checkbox selections
@@ -237,6 +307,7 @@ function toggleItemSelection(id, isSelected) {
     selectedItems.delete(id);
   }
   updateDrawer();
+  updateSelectAllButtonText();
 }
 
 // Update Drawer Visibility and Text Content
@@ -354,6 +425,8 @@ window.copySingle = function(id, btn) {
     btn.style.color = 'var(--accent-green)';
     btn.style.borderColor = 'var(--accent-green)';
     
+    showToast("Update copied to clipboard!");
+    
     setTimeout(() => {
       icon.className = 'fa-regular fa-copy';
       btn.style.color = '';
@@ -361,6 +434,7 @@ window.copySingle = function(id, btn) {
     }, 2000);
   }).catch(err => {
     console.error('Failed to copy text: ', err);
+    showToast("Failed to copy to clipboard.");
   });
 };
 
@@ -390,6 +464,8 @@ function exportToCSV() {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+  
+  showToast("Exported CSV file containing currently visible updates!");
 }
 
 // Initialize light/dark theme preference from localStorage
@@ -400,4 +476,95 @@ function initTheme() {
   if (currentTheme === 'light') {
     themeCheckbox.checked = true;
   }
+}
+
+// Expand or collapse long card descriptions
+window.toggleReadMore = function(e, btn) {
+  e.stopPropagation(); // Prevent card select click trigger
+  const wrapper = btn.previousElementSibling;
+  const isCollapsed = wrapper.classList.contains('collapsed');
+  
+  if (isCollapsed) {
+    wrapper.classList.remove('collapsed');
+    btn.innerHTML = 'Show Less <i class="fa-solid fa-chevron-up"></i>';
+  } else {
+    wrapper.classList.add('collapsed');
+    btn.innerHTML = 'Show More <i class="fa-solid fa-chevron-down"></i>';
+    // Scroll card back into view if needed
+    btn.closest('.release-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+};
+
+// Update Select All button state
+function updateSelectAllButtonText() {
+  const visible = getFilteredReleases();
+  if (visible.length === 0) {
+    selectAllBtn.style.display = 'none';
+    return;
+  }
+  selectAllBtn.style.display = 'flex';
+  const allSelected = visible.every(item => selectedItems.has(item.id));
+  selectAllBtn.querySelector('span').textContent = allSelected ? "Deselect All" : "Select All";
+}
+
+// Display floating toast alerts
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'toast-alert';
+  toast.innerHTML = `<i class="fa-solid fa-circle-check toast-icon"></i> <span>${message}</span>`;
+  
+  toastContainer.appendChild(toast);
+  
+  // Slide in
+  setTimeout(() => toast.classList.add('show'), 50);
+  
+  // Slide out and remove
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
+
+// Auto-Fit tweet content to 280 character constraints
+function autoFitTweet() {
+  if (selectedItems.size === 0) return;
+  const selectedList = Array.from(selectedItems).map(id => allReleases.find(r => r.id === id));
+  
+  if (selectedList.length === 1) {
+    const item = selectedList[0];
+    // Length layout: 280 - link length - tag text overhead
+    const maxDescLen = 280 - item.link.length - 45;
+    let desc = item.clean_desc;
+    if (desc.length > maxDescLen) {
+      desc = desc.substring(0, maxDescLen - 3) + "...";
+    }
+    tweetComposerArea.value = `Google Cloud BigQuery Update [${item.date}] - ${item.type}: ${desc} ${item.link}`;
+  } else {
+    const header = "🔥 Google Cloud BigQuery Updates:\n\n";
+    const footer = `\nDocs: ${selectedList[0].link}`;
+    const availableSpace = 280 - header.length - footer.length;
+    
+    // Distribute remaining characters among items
+    const spacePerItem = Math.floor(availableSpace / selectedList.length) - 15;
+    
+    let tweetText = header;
+    selectedList.forEach(item => {
+      let desc = item.clean_desc;
+      const targetLen = Math.max(30, spacePerItem);
+      if (desc.length > targetLen) {
+        desc = desc.substring(0, targetLen - 3) + "...";
+      }
+      tweetText += `• [${item.date}] ${item.type}: ${desc}\n`;
+    });
+    tweetText += footer;
+    tweetComposerArea.value = tweetText;
+  }
+  
+  // Refresh counters
+  const len = tweetComposerArea.value.length;
+  charCount.textContent = len;
+  charCount.style.color = '#94a3b8';
+  tweetWarning.style.display = 'none';
+  
+  showToast("Tweet successfully optimized to 280 characters!");
 }
