@@ -40,6 +40,8 @@ This file tracks the implementation progress and tasks for the BigQuery Release 
   - [x] Generate combined tweet formatting with character counter and length warning indicator
   - [x] Wire up Twitter intent URLs for individual and combined tweets
   - [x] Implement loading spinner animations for manual refreshing
+  - [x] Implement Copy to Clipboard button on each update card with visual feedback animation
+  - [x] Implement Export to CSV action for currently filtered/searched list
 - [x] **Validation & Testing**
   - [x] Launch Flask server locally in background
   - [x] Run test requests to `/api/releases` to verify JSON schema format

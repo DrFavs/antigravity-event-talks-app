@@ -17,6 +17,7 @@ const refreshBtn = document.getElementById('refreshBtn');
 const refreshIcon = document.getElementById('refreshIcon');
 const retryBtn = document.getElementById('retryBtn');
 const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+const exportCsvBtn = document.getElementById('exportCsvBtn');
 
 // Drawer Elements
 const tweeterDrawer = document.getElementById('tweeterDrawer');
@@ -39,6 +40,9 @@ function setupEventListeners() {
   // Refresh Feed
   refreshBtn.addEventListener('click', () => fetchReleases(true));
   retryBtn.addEventListener('click', () => fetchReleases(true));
+  
+  // Export to CSV
+  exportCsvBtn.addEventListener('click', exportToCSV);
   
   // Real-time Search
   searchInput.addEventListener('input', (e) => {
@@ -144,15 +148,20 @@ function showState(state, errorMsg = '') {
   }
 }
 
-// Render filtered lists
-function renderFilteredReleases() {
-  const filtered = allReleases.filter(item => {
+// Get currently filtered releases based on search and tab selections
+function getFilteredReleases() {
+  return allReleases.filter(item => {
     const matchesFilter = activeFilter === 'all' || item.type.toLowerCase() === activeFilter.toLowerCase();
     const matchesSearch = item.clean_desc.toLowerCase().includes(searchQuery) ||
                           item.date.toLowerCase().includes(searchQuery) ||
                           item.type.toLowerCase().includes(searchQuery);
     return matchesFilter && matchesSearch;
   });
+}
+
+// Render filtered lists
+function renderFilteredReleases() {
+  const filtered = getFilteredReleases();
 
   if (filtered.length === 0) {
     showState('empty');
@@ -187,7 +196,11 @@ function renderFilteredReleases() {
           <i class="fa-solid fa-arrow-up-right-from-square"></i> Docs
         </a>
         
-        <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <button class="btn-copy-sm" onclick="copySingle('${item.id}', this)" title="Copy update to clipboard">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+          
           <button class="btn-twitter-sm" onclick="tweetSingle('${item.id}')" title="Tweet about this update">
             <i class="fa-brands fa-x-twitter"></i> Tweet
           </button>
@@ -317,3 +330,55 @@ window.tweetSingle = function(id) {
   const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
   window.open(tweetUrl, '_blank');
 };
+
+// Copy single item description to clipboard
+window.copySingle = function(id, btn) {
+  const item = allReleases.find(r => r.id === id);
+  if (!item) return;
+  
+  const textToCopy = `Google Cloud BigQuery Update [${item.date}] - ${item.type}:\n${item.clean_desc}\n\nRead more: ${item.link}`;
+  
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    // Show copy visual feedback
+    const icon = btn.querySelector('i');
+    icon.className = 'fa-solid fa-check';
+    btn.style.color = 'var(--accent-green)';
+    btn.style.borderColor = 'var(--accent-green)';
+    
+    setTimeout(() => {
+      icon.className = 'fa-regular fa-copy';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy text: ', err);
+  });
+};
+
+// Export currently active releases to a CSV file
+function exportToCSV() {
+  const filtered = getFilteredReleases();
+  if (filtered.length === 0) return;
+  
+  // Add BOM for Excel UTF-8 compliance
+  let csvContent = "\uFEFFDate,Type,Description,Link\n";
+  
+  filtered.forEach(item => {
+    const date = `"${item.date.replace(/"/g, '""')}"`;
+    const type = `"${item.type.replace(/"/g, '""')}"`;
+    const cleanDesc = `"${item.clean_desc.replace(/"/g, '""')}"`;
+    const link = `"${item.link.replace(/"/g, '""')}"`;
+    
+    csvContent += `${date},${type},${cleanDesc},${link}\n`;
+  });
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `bigquery_releases_${activeFilter}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
