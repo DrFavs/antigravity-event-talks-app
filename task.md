@@ -11,6 +11,7 @@ This file tracks the implementation progress and tasks for the BigQuery Release 
   - [x] Create `requirements.txt` with Flask and Requests
   - [x] Install dependencies via `requirements.txt` inside the virtual environment
   - [x] Create `.gitignore` to exclude virtual environment, compiled Python, and cache files
+  - [x] Create `README.md` documentation for project overview, setup, and usage
 - [x] **Backend Development (`app.py`)**
   - [x] Setup Flask application
   - [x] Parse Atom XML feed from `https://docs.cloud.google.com/feeds/bigquery-release-notes.xml`
@@ -42,3 +43,8 @@ This file tracks the implementation progress and tasks for the BigQuery Release 
 - [x] **Validation & Testing**
   - [x] Launch Flask server locally in background
   - [x] Run test requests to `/api/releases` to verify JSON schema format
+- [x] **GitHub Integration**
+  - [x] Install Git and GitHub CLI (`gh`) via WinGet
+  - [x] Authenticate GitHub CLI with user's account (`DrFavs`)
+  - [x] Create the new public repository `antigravity-event-talks-app` on GitHub
+  - [x] Push local commits to the `master` branch on GitHub (https://github.com/DrFavs/antigravity-event-talks-app)
